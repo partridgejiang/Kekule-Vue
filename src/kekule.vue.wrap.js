@@ -24,7 +24,7 @@ ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'dispatchEvent', function($origin
 	return result;
 });
 
-ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'getVueComponent', function($origin, eventName, event){
+ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'getVueComponent', function($origin){
 	return this._vueComponent;
 });
 
