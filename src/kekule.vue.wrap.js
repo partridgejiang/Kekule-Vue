@@ -1,13 +1,27 @@
 import { h } from 'vue';
-import { Kekule, KekuleVue } from './kekule.vue.base.js';
+import { ClassEx, Kekule, KekuleVue } from './kekule.vue.base.js';
 
 Kekule.globalOptions.add('Vue.widgetWrapper', {
 	exposeWidgetPropertiesToVueComputes: true,
 	exposeWidgetPropertiesToVueProps: true,
+	exposeWidgetEvents: true,
 	//exposeWidgetMethods: false,
 	// widget properties may conflict with element, should not be exposed in wrapping
 	ignoredProperties: ['id', 'draggable', 'droppable', 'innerHTML', 'style', 'offsetParent', 'offsetLeft', 'offsetTop', 'offsetWidth', 'offsetHeight'],
 	vuePropNamePrefix: 'initial'
+});
+
+ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'dispatchEvent', function($origin, eventName, event){
+	let result = $origin(eventName, event);
+
+	let vueComp = this._vueComponent;
+	if (vueComp && vueComp.__emitKekuleEvents__)
+	{
+		if (!event.vueComponent)
+			event.vueComponent = this._vueComponent;
+		vueComp.$emit(eventName, event);
+	}
+	return result;
 });
 
 /**
@@ -24,7 +38,8 @@ KekuleVue.Utils = {
 	 *     exposeWidgetPropertiesToVueComputes: bool, whether add [kekulePropName] to vue component compute props
 	 *     exposeWidgetPropertiesToVueProps: bool, whether add initial[KekulePropName] props to vue component
 	 *     exposedProperties: array,
-	 *     ignoredProperties: array
+	 *     ignoredProperties: array,
+	 *     exposeWidgetEvents: bool, whether emit event on vue component when a event is invoked by Kekule widget
 	 *   }
 	 * @returns {Object} Vue component.
 	 */
@@ -34,11 +49,13 @@ KekuleVue.Utils = {
 		let ops = Object.extend({
 			exposeWidgetPropertiesToVueComputes: globalOptions.exposeWidgetPropertiesToVueComputes,
 			exposeWidgetPropertiesToVueProps: globalOptions.exposeWidgetPropertiesToVueProps,
+			exposeWidgetEvents: globalOptions.exposeWidgetEvents,
 			ignoredProperties: globalOptions.ignoredProperties,
 			exposeWidgetMethods: globalOptions.exposeWidgetMethods,
 			vuePropNamePrefix: globalOptions.vuePropNamePrefix
 		}, options || {});
 		let vuePropNamePrefix = ops.vuePropNamePrefix;
+		let exposeKekuleEvents = ops.exposeWidgetEvents;
 
 		let props = ClassEx.getAllPropList(widgetClass);
 		let vueComputes = {}, vueProps = [], vueWatches = {};
@@ -148,16 +165,21 @@ KekuleVue.Utils = {
 					let kPropName = vuePropName.substring(prefixLength, prefixLength + 1).toLowerCase() + vuePropName.substring(prefixLength + 1);
 					if (typeof(value) !== 'undefined')
 					{
-						//console.log('set init prop', vuePropName, kPropName, value);
+						console.log('set init prop', vuePropName, kPropName, value);
 						this[kPropName] = value;
 					}
 				}
+			},
+			created()
+			{
+				this.__emitKekuleEvents__ = exposeKekuleEvents;
 			},
 			mounted()
 			{
 				let elem = this.$refs.widgetElem;
 				this.widget = new widgetClass(elem.ownerDocument);
 				this.widget.appendToElem(elem);
+				this.widget._vueComponent = this;
 				this._initWidget();
 			},
 			beforeUnmount()

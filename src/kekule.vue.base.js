@@ -7,6 +7,7 @@ else if (typeof(self) === 'object')
 	$root = self;
 
 let Kekule = $root.Kekule;
+let ClassEx = Kekule.ClassEx;
 
 /**
  * Namespace of Kekule-Vue.
@@ -16,4 +17,4 @@ Kekule.Vue = {};
 
 let KekuleVue = Kekule.Vue;
 
-export { Kekule, KekuleVue };
+export { ClassEx, Kekule, KekuleVue };
