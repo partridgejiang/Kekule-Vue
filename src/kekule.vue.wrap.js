@@ -24,6 +24,10 @@ ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'dispatchEvent', function($origin
 	return result;
 });
 
+ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'getVueComponent', function($origin, eventName, event){
+	return this._vueComponent;
+});
+
 /**
  * Util functions of Kekule-Vue.
  * @class
