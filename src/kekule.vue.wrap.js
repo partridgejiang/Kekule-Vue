@@ -7,7 +7,7 @@ Kekule.globalOptions.add('Vue.widgetWrapper', {
 	//exposeWidgetMethods: false,
 	// widget properties may conflict with element, should not be exposed in wrapping
 	ignoredProperties: ['id', 'draggable', 'droppable', 'innerHTML', 'style', 'offsetParent', 'offsetLeft', 'offsetTop', 'offsetWidth', 'offsetHeight'],
-	vuePropNamePrefix: 'init'
+	vuePropNamePrefix: 'initial'
 });
 
 /**
@@ -22,7 +22,7 @@ KekuleVue.Utils = {
 	 * @param {Hash} options May include fields:
 	 *   {
 	 *     exposeWidgetPropertiesToVueComputes: bool, whether add [kekulePropName] to vue component compute props
-	 *     exposeWidgetPropertiesToVueProps: bool, whether add init[KekulePropName] props to vue component
+	 *     exposeWidgetPropertiesToVueProps: bool, whether add initial[KekulePropName] props to vue component
 	 *     exposedProperties: array,
 	 *     ignoredProperties: array
 	 *   }
