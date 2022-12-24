@@ -1,0 +1,37 @@
+{
+  "name": "kekule-vue",
+  "version": "0.1.0",
+  "description": "Vue component wrapper for Kekule.js widgets",
+  "main": "src/kekule.vue.js",
+  "author": {
+    "name": "Chen Jiang",
+    "email": "partridge@cpu.edu.cn"
+  },
+  "maintainers": [
+    {
+      "name": "Chen Jiang",
+      "email": "partridge@cpu.edu.cn"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/partridgejiang/Kekule.js/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT"
+    }
+  ],
+  "keywords": [
+    "kekule",
+    "vue",
+    "chemistry",
+    "cheminformatics",
+    "chemoinformatics",
+    "molecule"
+  ],
+
+  "dependencies": {
+    "kekule": "^0.9.9",
+    "vue": "^3.2.45"
+  }
+}
