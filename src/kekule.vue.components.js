@@ -15,7 +15,7 @@ let wrapWidgetConfigs = [
 		'widgetClassName': 'Kekule.ChemWidget.Viewer',
 		options: {
 			'defaultModelValuePropName': 'chemObj',
-			'defaultModelValueGetterMethod': 'getSavingTargetObj',
+			//'defaultModelValueGetterMethod': 'getSavingTargetObj',
 			'modelUpdateEventMap': {
 				'repaint': ['drawOptions', 'moleculeDisplayType', 'zoom', 'padding', 'autofit', 'autoShrink', 'hideHydrogens', 'allowCoordBorrow', 'autoSize', 'baseCoordOffset']
 			}
@@ -43,9 +43,9 @@ let wrapWidgetConfigs = [
 		'widgetClassName': 'Kekule.Editor.Composer',
 		options: {
 			'defaultModelValuePropName': 'chemObj',
-			'defaultModelValueGetterMethod': 'getSavingTargetObj',
+			//'defaultModelValueGetterMethod': 'getSavingTargetObj',  // cause problem in v-model
 			'modelUpdateEventMap': {
-				'editObjsUpdated': ['chemObj'],
+				//'editObjsUpdated': ['chemObj'],
 				'repaint': ['drawOptions']
 			}
 		}

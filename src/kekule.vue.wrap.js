@@ -37,14 +37,16 @@ ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'dispatchEvent', function($origin
 				{
 					modelValue = (vueModelInfo.methodName) ? this[vueModelInfo.methodName].bind(this)(): this.getPropValue(propName);
 					//console.log('default model value', propName, modelValue);
-					vueComp.$emit('update:modelValue', modelValue);
+					//vueComp.$emit('update:modelValue', modelValue);
+					vueComp._notifyModelValueChange(propName, modelValue, true);
 				}
 				if (vueModelInfo.enableOnAllProperties)  // custom model property
 				{
 					if (modelValue === undefined)
 						modelValue = this.getPropValue(propName);
 					let vuePropName = KekuleVue.Utils._kekulePropNameToVue(propName, vueModelInfo.vuePropNamePrefix);
-					vueComp.$emit('update:' + vuePropName, modelValue);
+					//vueComp.$emit('update:' + vuePropName, modelValue);
+					vueComp._notifyModelValueChange(propName, modelValue, false);
 					//console.log('update custom', eventName, vuePropName, modelValue);
 				}
 			});
@@ -176,19 +178,10 @@ KekuleVue.Utils = {
 					let vuePropName = KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix);
 					vueProps.push(vuePropName);
 					vueWatches[vuePropName] = function(newVal, oldVal) {
-						// console.log('vueprop changed', vuePropName, newVal, oldVal);
-						this._setKekulePropValueByVueProp(vuePropName, newVal);
+						 console.log('vueprop changed', vuePropName, newVal, oldVal);
+						//this._setKekulePropValueByVueProp(vuePropName, newVal);
+						this._updateWidgetByVuePropValue(vuePropName, newVal, oldVal);
 					};
-					/*
-					// Vue props are readonly to component, no need to watch their change
-					vueWatches[vuePropName] = (newVal, oldVal) =>
-					{
-						if (this.widget)
-						{
-							this._setKekulePropValueByVueProp(vuePropName, newVal);
-						}
-					}
-					*/
 				}
 			}
 		}
@@ -198,9 +191,20 @@ KekuleVue.Utils = {
 		{
 			vueProps.push('modelValue');
 			vueWatches['modelValue'] =  function(newVal, oldVal) {
-				// console.log('vueprop changed', vuePropName, newVal, oldVal);
 				//this._setKekulePropValueByVueProp(vuePropName, newVal);
-				this[defaultVueModelPropName] = newVal;  // defaultVueModelPropName is a Kekule property name
+				//this[defaultVueModelPropName] = newVal;  // defaultVueModelPropName is a Kekule property name
+				this._updateWidgetByVuePropValue(KekuleVue.Utils._kekulePropNameToVue(defaultVueModelPropName, vuePropNamePrefix), newVal, oldVal);
+				return;
+				let widget = this.getWidget();
+				let vueModelInfo = this.getWidget().__vueModelInfo__;
+				if (widget && vueModelInfo)
+				{
+					if (newVal !== oldVal)
+					{
+						this[defaultVueModelPropName] = newVal;  // defaultVueModelPropName is a Kekule property name
+						//widget.setPropValue('defaultVueModelPropName', newVal);
+					}
+				}
 			};
 		}
 
@@ -232,14 +236,15 @@ KekuleVue.Utils = {
 										// console.log('update' + KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix), value);
 										if (widget.__vueModelInfo__.enableOnAllProperties)
 										{
-											this.$emit('update:' + KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix), value);
+											//this.$emit('update:' + KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix), value);
+											this._notifyModelValueChange(propName, value);
 										}
 										if (propName === widget.__vueModelInfo__.propName)  // default model value
 										{
 											if (widget.__vueModelInfo__.methodName)
 												value = widget[widget.__vueModelInfo__.methodName].bind(widget)();
-											// console.log('default model value', propName, value);
-											this.$emit('update:modelValue', value);
+											//this.$emit('update:modelValue', value);
+											this._notifyModelValueChange(propName, value, true);
 										}
 									}
 								});
@@ -265,25 +270,42 @@ KekuleVue.Utils = {
 						this._setKekulePropValueByVueProp(vuePropName, value, true);  // only concern about real set prop values
 					});
 				},
-				_finalizeWidget: function()
+				_finalizeWidget()
 				{
 					this.widget.finalize();
 				},
 
-				_setKekulePropValueByVueProp: function(vuePropName, value, ignoreUndefinedVuePropValue)
+				_setKekulePropValueByVueProp(vuePropName, value, ignoreUndefinedVuePropValue)
 				{
 					if (ignoreUndefinedVuePropValue && typeof(value) === 'undefined')
 						return;
-					/*
-					let prefixLength = vuePropNamePrefix.length;
-					let kPropName = vuePropName.substring(prefixLength, prefixLength + 1).toLowerCase() + vuePropName.substring(prefixLength + 1);
-					*/
 					let kPropName = KekuleVue.Utils._vuePropNameToKekule(vuePropName, vuePropNamePrefix);
 					//console.log('set vue prop', this.widget.getClassName(), kPropName, value);
 					if (this[kPropName] !== value)
 					{
 						this[kPropName] = value;
 					}
+				},
+
+				_updateWidgetByVuePropValue(vuePropName, newVal, oldVal)
+				{
+					//console.log('_updateWidgetByVuePropValue', newVal, (newVal && newVal.__$vueModelValueUpdateInvoker$__ == this));
+					if (!newVal || newVal.__$vueModelValueUpdateInvoker$__ !== this)
+					{
+						let kPropName = KekuleVue.Utils._vuePropNameToKekule(vuePropName, vuePropNamePrefix);
+						//console.log('_updateWidgetByVuePropValue', vuePropName, kPropName, newVal, this.widget.getClassName());
+						this._setKekulePropValueByVueProp(vuePropName, newVal);
+						//console.log('after set', this[vuePropName], this.widget.getPropValue(kPropName));
+					}
+				},
+				_notifyModelValueChange(propName, propValue, isDefault)
+				{
+					let vuePropName = isDefault ? 'modelValue' : KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix);
+					let propValueType = typeof(propValue);
+					// TODO: not a fine solution
+					if (propValue && (propValueType === 'object' || propValueType === 'function'))     // complex value, we will attach a special flag here, avoid _updateWidgetByVuePropValue be called on this invoker
+						propValue.__$vueModelValueUpdateInvoker$__ = this;
+					this.$emit('update:' + vuePropName, propValue);
 				}
 			},
 			created()
@@ -306,13 +328,6 @@ KekuleVue.Utils = {
 					};
 				}
 				let widgetElem = this.widget.getElement();
-				/*
-				widgetElem.style.position = 'absolute';
-				widgetElem.style.top = 0;
-				widgetElem.style.left = 0;
-				widgetElem.style.right = 0;
-				widgetElem.style.bottom = 0;
-				*/
 				widgetElem.style.width = '100%';
 				widgetElem.style.height = '100%';
 				widgetElem.style.margin = 0;
