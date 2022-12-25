@@ -178,7 +178,7 @@ KekuleVue.Utils = {
 					let vuePropName = KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix);
 					vueProps.push(vuePropName);
 					vueWatches[vuePropName] = function(newVal, oldVal) {
-						 console.log('vueprop changed', vuePropName, newVal, oldVal);
+						// console.log('vueprop changed', vuePropName, newVal, oldVal);
 						//this._setKekulePropValueByVueProp(vuePropName, newVal);
 						this._updateWidgetByVuePropValue(vuePropName, newVal, oldVal);
 					};
@@ -191,20 +191,7 @@ KekuleVue.Utils = {
 		{
 			vueProps.push('modelValue');
 			vueWatches['modelValue'] =  function(newVal, oldVal) {
-				//this._setKekulePropValueByVueProp(vuePropName, newVal);
-				//this[defaultVueModelPropName] = newVal;  // defaultVueModelPropName is a Kekule property name
 				this._updateWidgetByVuePropValue(KekuleVue.Utils._kekulePropNameToVue(defaultVueModelPropName, vuePropNamePrefix), newVal, oldVal);
-				return;
-				let widget = this.getWidget();
-				let vueModelInfo = this.getWidget().__vueModelInfo__;
-				if (widget && vueModelInfo)
-				{
-					if (newVal !== oldVal)
-					{
-						this[defaultVueModelPropName] = newVal;  // defaultVueModelPropName is a Kekule property name
-						//widget.setPropValue('defaultVueModelPropName', newVal);
-					}
-				}
 			};
 		}
 
@@ -281,7 +268,7 @@ KekuleVue.Utils = {
 						return;
 					let kPropName = KekuleVue.Utils._vuePropNameToKekule(vuePropName, vuePropNamePrefix);
 					//console.log('set vue prop', this.widget.getClassName(), kPropName, value);
-					if (this[kPropName] !== value)
+					//if (this[kPropName] !== value)
 					{
 						this[kPropName] = value;
 					}
@@ -292,7 +279,7 @@ KekuleVue.Utils = {
 					//console.log('_updateWidgetByVuePropValue', newVal, (newVal && newVal.__$vueModelValueUpdateInvoker$__ == this));
 					if (!newVal || newVal.__$vueModelValueUpdateInvoker$__ !== this)
 					{
-						let kPropName = KekuleVue.Utils._vuePropNameToKekule(vuePropName, vuePropNamePrefix);
+						//let kPropName = KekuleVue.Utils._vuePropNameToKekule(vuePropName, vuePropNamePrefix);
 						//console.log('_updateWidgetByVuePropValue', vuePropName, kPropName, newVal, this.widget.getClassName());
 						this._setKekulePropValueByVueProp(vuePropName, newVal);
 						//console.log('after set', this[vuePropName], this.widget.getPropValue(kPropName));
