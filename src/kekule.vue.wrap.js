@@ -1,4 +1,4 @@
-import { h, watch } from 'vue';
+import { h, watch, ref } from 'vue';
 import { ClassEx, Kekule, KekuleVue } from './kekule.vue.base.js';
 import './kekule.vue.css';
 
@@ -147,7 +147,8 @@ KekuleVue.Utils = {
 					vueComputes[propName] = {};
 					vueComputes[propName].get = function ()
 					{
-						return this.widget && this.widget.getPropValue(propName);
+						return this.widgetRef && this.widgetRef.value.getPropValue(propName);
+						//return this.widgetRef && this.widgetRef.getPropValue(propName);
 					}
 					if (propInfo.setter)
 					{
@@ -155,13 +156,14 @@ KekuleVue.Utils = {
 						{
 							if (!this.__updateComputePropValueCache__)  // special flag, means we are update the vue compute prop cache, no need to actually change the widget
 							{
-								if (!this.widget)
+								if (!this.widgetRef)
 									return;
 								this.__setComputePropValue__ = true;   // special flag, means the kekule property is changed by vue component
 								try
 								{
-									this.widget.setPropValue(propName, value);
-								} finally
+									this.widgetRef.value.setPropValue(propName, value);
+								}
+								finally
 								{
 									this.__setComputePropValue__ = false;
 								}
@@ -277,13 +279,11 @@ KekuleVue.Utils = {
 
 				_updateWidgetByVuePropValue(vuePropName, newVal, oldVal)
 				{
-					//console.log('_updateWidgetByVuePropValue', newVal, (newVal && newVal.__$vueModelValueUpdateInvoker$__ == this));
+					//console.log('_updateWidgetByVuePropValue', vuePropName, newVal, (newVal && newVal.__$vueModelValueUpdateInvoker$__ == this));
 					if (!newVal || newVal.__$vueModelValueUpdateInvoker$__ !== this)
 					{
-						//let kPropName = KekuleVue.Utils._vuePropNameToKekule(vuePropName, vuePropNamePrefix);
-						//console.log('_updateWidgetByVuePropValue', vuePropName, kPropName, newVal, this.widget.getClassName());
+						let kPropName = KekuleVue.Utils._vuePropNameToKekule(vuePropName, vuePropNamePrefix);
 						this._setKekulePropValueByVueProp(vuePropName, newVal);
-						//console.log('after set', this[vuePropName], this.widget.getPropValue(kPropName));
 					}
 				},
 				_notifyModelValueChange(propName, propValue, isDefault)
@@ -304,6 +304,7 @@ KekuleVue.Utils = {
 			{
 				let elem = this.$refs.widgetElem;
 				this.widget = new widgetClass(elem.ownerDocument);
+				this.widgetRef = ref(this.widget);
 				//console.log('create widget', this.widget.getClassName());
 				if (enableVModel)
 				{
