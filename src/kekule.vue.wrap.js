@@ -26,7 +26,7 @@ ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'dispatchEvent', function($origin
 			vueComp.$emit(eventName, event);
 		}
 		let vueModelInfo = this.__vueModelInfo__;
-		if (vueModelInfo && vueModelInfo.eventMap)
+		if (vueModelInfo && vueModelInfo.eventMap && !vueComp.__setComputePropValue__)
 		{
 			let affectedProps = vueModelInfo.eventMap[eventName] || [];
 			// if (affectedProps.length)
@@ -294,6 +294,7 @@ KekuleVue.Utils = {
 			{
 				let elem = this.$refs.widgetElem;
 				this.widget = new widgetClass(elem.ownerDocument);
+				//console.log('create widget', this.widget.getClassName());
 				if (enableVModel)
 				{
 					this.widget.__vueModelInfo__ = {
