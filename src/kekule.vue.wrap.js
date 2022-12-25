@@ -1,5 +1,6 @@
 import { h, watch } from 'vue';
 import { ClassEx, Kekule, KekuleVue } from './kekule.vue.base.js';
+import './kekule.vue.css';
 
 Kekule.globalOptions.add('Vue.widgetWrapper', {
 	exposeWidgetPropertiesToVueComputes: true,
@@ -315,9 +316,11 @@ KekuleVue.Utils = {
 					};
 				}
 				let widgetElem = this.widget.getElement();
-				widgetElem.style.width = '100%';
-				widgetElem.style.height = '100%';
-				widgetElem.style.margin = 0;
+				// widgetElem.style.position = 'absolute';
+				// widgetElem.style.width = '100%';
+				// widgetElem.style.height = '100%';
+				//widgetElem.style.flex = '1 1 auto';
+				//widgetElem.style.margin = 0;
 				this.widget.appendToElem(elem);
 				this.widget._vueComponent = this;
 				this._initWidget();
@@ -327,7 +330,7 @@ KekuleVue.Utils = {
 				this._finalizeWidget();
 			},
 			render(){
-				return h('div', {'ref': 'widgetElem'});
+				return h('div', {'ref': 'widgetElem', 'class': 'Kekule-Vue-Component-Wrapper'});
 			}
 		}
 
