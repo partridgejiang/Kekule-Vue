@@ -1,25 +1,67 @@
-import { h } from 'vue';
+import { h, watch } from 'vue';
 import { ClassEx, Kekule, KekuleVue } from './kekule.vue.base.js';
 
 Kekule.globalOptions.add('Vue.widgetWrapper', {
 	exposeWidgetPropertiesToVueComputes: true,
 	exposeWidgetPropertiesToVueProps: true,
 	exposeWidgetEvents: true,
+	enableVModel: true,
+	enableVModelOnAllProperties: true,
 	//exposeWidgetMethods: false,
 	// widget properties may conflict with element, should not be exposed in wrapping
 	ignoredProperties: ['id', 'draggable', 'droppable', 'innerHTML', 'style', 'offsetParent', 'offsetLeft', 'offsetTop', 'offsetWidth', 'offsetHeight'],
-	vuePropNamePrefix: 'initial'
+	vuePropNamePrefix: 'vue'
 });
 
 ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'dispatchEvent', function($origin, eventName, event){
 	let result = $origin(eventName, event);
 
 	let vueComp = this._vueComponent;
-	if (vueComp && vueComp.__emitKekuleEvents__)
+	if (vueComp)
 	{
-		if (!event.vueComponent)
-			event.vueComponent = this._vueComponent;
-		vueComp.$emit(eventName, event);
+		if (vueComp.__emitKekuleEvents__)
+		{
+			if (!event.vueComponent)
+				event.vueComponent = this._vueComponent;
+			vueComp.$emit(eventName, event);
+		}
+		let vueModelInfo = this.__vueModelInfo__;
+		if (vueModelInfo && vueModelInfo.eventMap)
+		{
+			let affectedProps = vueModelInfo.eventMap[eventName] || [];
+			// if (affectedProps.length)
+			// 	console.log(vueModelInfo, affectedProps);
+			affectedProps.forEach(propName => {
+				let modelValue;
+				if (propName === vueModelInfo.propName)  // default model property
+				{
+					modelValue = (vueModelInfo.methodName) ? this[vueModelInfo.methodName].bind(this)(): this.getPropValue(propName);
+					//console.log('default model value', propName, modelValue);
+					vueComp.$emit('update:modelValue', modelValue);
+				}
+				if (vueModelInfo.enableOnAllProperties)  // custom model property
+				{
+					if (modelValue === undefined)
+						modelValue = this.getPropValue(propName);
+					let vuePropName = KekuleVue.Utils._kekulePropNameToVue(propName, vueModelInfo.vuePropNamePrefix);
+					vueComp.$emit('update:' + vuePropName, modelValue);
+					//console.log('update custom', eventName, vuePropName, modelValue);
+				}
+			});
+
+			/*
+			if (this.__vueModelInfo__.methodName || this.__vueModelInfo__.propName)  // default model
+			{
+				if (this.__vueModelInfo__.events && this.__vueModelInfo__.events.indexOf(eventName) >= 0)
+				{
+					let modalValue = (this.__vueModelInfo__.methodName) ? this[this.__vueModelInfo__.methodName].bind(this)() :
+						(this.__vueModelInfo__.propName) ? this.getPropValue(this.__vueModelInfo__.propName) :
+							undefined;
+					vueComp.$emit('update:modelValue', modalValue);
+				}
+			}
+			*/
+		}
 	}
 	return result;
 });
@@ -33,6 +75,15 @@ ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'getVueComponent', function($orig
  * @class
  */
 KekuleVue.Utils = {
+	_kekulePropNameToVue: function(propName, vuePropNamePrefix)
+	{
+		return vuePropNamePrefix + propName.charAt(0).toUpperCase() + propName.substr(1);
+	},
+	_vuePropNameToKekule: function(propName, vuePropNamePrefix)
+	{
+		let prefixLength = vuePropNamePrefix.length;
+		return propName.substring(prefixLength, prefixLength + 1).toLowerCase() + propName.substring(prefixLength + 1);
+	},
 	/**
 	 * Wrap a Kekule widget into vue component.
 	 * @param {Class} widgetClass
@@ -43,7 +94,12 @@ KekuleVue.Utils = {
 	 *     exposeWidgetPropertiesToVueProps: bool, whether add initial[KekulePropName] props to vue component
 	 *     exposedProperties: array,
 	 *     ignoredProperties: array,
-	 *     exposeWidgetEvents: bool, whether emit event on vue component when a event is invoked by Kekule widget
+	 *     exposeWidgetEvents: bool, whether emit event on vue component when an event is invoked by Kekule widget,
+	 *     enableVModel: bool, whether enable v-model binds in this widget
+	 *     enableVModelOnAllProperties: bool,
+	 *     defaultModelValuePropName: string, which Kekule property should be bound to v-model,
+	 *     defaultModelValueGetterMethod: string, alt to defaultModelValuePropName, the method to get model value,
+	 *     modelUpdateEventMap: hash, {eventName: affectedPropsArray}. When these Kekule event is invoked in widget, vue model value should also be notified to change
 	 *   }
 	 * @returns {Object} Vue component.
 	 */
@@ -56,9 +112,16 @@ KekuleVue.Utils = {
 			exposeWidgetEvents: globalOptions.exposeWidgetEvents,
 			ignoredProperties: globalOptions.ignoredProperties,
 			exposeWidgetMethods: globalOptions.exposeWidgetMethods,
-			vuePropNamePrefix: globalOptions.vuePropNamePrefix
+			vuePropNamePrefix: globalOptions.vuePropNamePrefix,
+			enableVModel: globalOptions.enableVModel,
+			enableVModelOnAllProperties: globalOptions.enableVModelOnAllProperties
 		}, options || {});
 		let vuePropNamePrefix = ops.vuePropNamePrefix;
+		let enableVModel = ops.enableVModel;
+		let enableVModelOnAllProperties = ops.enableVModelOnAllProperties;
+		let defaultVueModelPropName = ops.defaultModelValuePropName;
+		let defaultVueModelValueGetterMethod = ops.defaultModelValueGetterMethod;
+		let vueModelUpdateEventMap = ops.modelUpdateEventMap || {};
 		let exposeKekuleEvents = ops.exposeWidgetEvents;
 
 		let props = ClassEx.getAllPropList(widgetClass);
@@ -109,8 +172,13 @@ KekuleVue.Utils = {
 			{
 				if (propInfo.setter)  // only writable property can be exposed to vue props
 				{
-					let vuePropName = vuePropNamePrefix + propName.charAt(0).toUpperCase() + propName.substr(1);
+					//let vuePropName = vuePropNamePrefix + propName.charAt(0).toUpperCase() + propName.substr(1);
+					let vuePropName = KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix);
 					vueProps.push(vuePropName);
+					vueWatches[vuePropName] = function(newVal, oldVal) {
+						// console.log('vueprop changed', vuePropName, newVal, oldVal);
+						this._setKekulePropValueByVueProp(vuePropName, newVal);
+					};
 					/*
 					// Vue props are readonly to component, no need to watch their change
 					vueWatches[vuePropName] = (newVal, oldVal) =>
@@ -125,9 +193,21 @@ KekuleVue.Utils = {
 			}
 		}
 
+		// has default model property, need to add it to vue props
+		if (defaultVueModelPropName)
+		{
+			vueProps.push('modelValue');
+			vueWatches['modelValue'] =  function(newVal, oldVal) {
+				// console.log('vueprop changed', vuePropName, newVal, oldVal);
+				//this._setKekulePropValueByVueProp(vuePropName, newVal);
+				this[defaultVueModelPropName] = newVal;  // defaultVueModelPropName is a Kekule property name
+			};
+		}
+
 		let vueComponent = {
 			computed: vueComputes,
 			props: vueProps,
+			watch: vueWatches,
 			methods: {
 				getWidget() { return this.widget; },
 				_initWidget()
@@ -142,8 +222,26 @@ KekuleVue.Utils = {
 							this.__updateComputePropValueCache__ = true;
 							try
 							{
+								let widget = this.getWidget();
 								e.changedPropNames.forEach(propName => {
-									this[propName] = this.getWidget().getPropValue(propName);
+									let value = this.getWidget().getPropValue(propName);
+									this[propName] = value;
+									//console.log('prop change', propName, value, widget.__vueModelInfo__);
+									if (widget.__vueModelInfo__) // update vmodel value
+									{
+										// console.log('update' + KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix), value);
+										if (widget.__vueModelInfo__.enableOnAllProperties)
+										{
+											this.$emit('update:' + KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix), value);
+										}
+										if (propName === widget.__vueModelInfo__.propName)  // default model value
+										{
+											if (widget.__vueModelInfo__.methodName)
+												value = widget[widget.__vueModelInfo__.methodName].bind(widget)();
+											// console.log('default model value', propName, value);
+											this.$emit('update:modelValue', value);
+										}
+									}
 								});
 							}
 							finally
@@ -154,22 +252,36 @@ KekuleVue.Utils = {
 					});
 					// setup by vue props values
 					vueProps.forEach(vuePropName => {
-						let prefixLength = vuePropNamePrefix.length;
 						let value = this[vuePropName];
-						this._setKekulePropValueByVueProp(vuePropName, value);
+						if (vuePropName === 'modelValue')  // default model value, transfer to suitable property name
+						{
+							let widget = this.getWidget();
+							let vueModelInfo = widget.__vueModelInfo__;
+							if (vueModelInfo && vueModelInfo.propName)
+							{
+								this[vueModelInfo.propName] = value;
+							}
+						}
+						this._setKekulePropValueByVueProp(vuePropName, value, true);  // only concern about real set prop values
 					});
 				},
 				_finalizeWidget: function()
 				{
 					this.widget.finalize();
 				},
-				_setKekulePropValueByVueProp: function(vuePropName, value)
+
+				_setKekulePropValueByVueProp: function(vuePropName, value, ignoreUndefinedVuePropValue)
 				{
+					if (ignoreUndefinedVuePropValue && typeof(value) === 'undefined')
+						return;
+					/*
 					let prefixLength = vuePropNamePrefix.length;
 					let kPropName = vuePropName.substring(prefixLength, prefixLength + 1).toLowerCase() + vuePropName.substring(prefixLength + 1);
-					if (typeof(value) !== 'undefined')
+					*/
+					let kPropName = KekuleVue.Utils._vuePropNameToKekule(vuePropName, vuePropNamePrefix);
+					//console.log('set vue prop', this.widget.getClassName(), kPropName, value);
+					if (this[kPropName] !== value)
 					{
-						console.log('set init prop', vuePropName, kPropName, value);
 						this[kPropName] = value;
 					}
 				}
@@ -182,6 +294,27 @@ KekuleVue.Utils = {
 			{
 				let elem = this.$refs.widgetElem;
 				this.widget = new widgetClass(elem.ownerDocument);
+				if (enableVModel)
+				{
+					this.widget.__vueModelInfo__ = {
+						'vuePropNamePrefix': vuePropNamePrefix,
+						'enableOnAllProperties': enableVModelOnAllProperties,
+						'eventMap': vueModelUpdateEventMap,
+						'propName': defaultVueModelPropName,
+						'methodName': defaultVueModelValueGetterMethod
+					};
+				}
+				let widgetElem = this.widget.getElement();
+				/*
+				widgetElem.style.position = 'absolute';
+				widgetElem.style.top = 0;
+				widgetElem.style.left = 0;
+				widgetElem.style.right = 0;
+				widgetElem.style.bottom = 0;
+				*/
+				widgetElem.style.width = '100%';
+				widgetElem.style.height = '100%';
+				widgetElem.style.margin = 0;
 				this.widget.appendToElem(elem);
 				this.widget._vueComponent = this;
 				this._initWidget();
