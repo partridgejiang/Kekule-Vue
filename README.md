@@ -16,12 +16,18 @@ let Composer = KekuleVue.Utils.wrapWidget(Kekule.Editor.Composer,
       exposeWidgetEvents: true,	
       // each of widget's property will map to the wrapped Vue component's computed property	
       exposeWidgetPropertiesToVueComputes: true,  
-      // each of widget's property will map to the wrapped Vue component's property naming with 'initial' prefix, e.g. 'enableOperHistory' to 'initialEnableOperHistory'
+      // each of widget's property will map to the wrapped Vue component's property naming with 'vue' prefix, e.g. 'enableOperHistory' to 'vueEnableOperHistory'
       exposeWidgetPropertiesToVueProps: true,
       // explicitly set property names exposed to Vue
       //exposedProperties: []
       // property names hide from Vue
-      ignoredProperties: ['editorNexus', 'actionMap']
+      ignoredProperties: ['editorNexus', 'actionMap'],
+      // whether enable v-model binds in this widget
+      enableVModel: true,
+      // which Kekule property should be bound to default v-model,
+      defaultModelValuePropName: 'chemObj',
+      // if true, parametered v-model can be used on all properties of Kekule widget, e.g. v-model:vueEnableOperHistory (note property name prefixed with 'vue') 
+      enableVModelOnAllProperties: true
     });
 
 export { Composer };
@@ -33,11 +39,13 @@ Then the wrapped component can be utilized in Vue application:
 ```vue
 <!-- App.vue -->
 <template>
-  <!-- composer component with vue prop and event settings -->
+  <!-- composer component with vue prop and event settings, default v-model bound to chemObj and v-model:vueSelection to selection -->
   <composer ref="composer" 
             initial-predefined-setting="molOnly" :initial-enable-oper-history="false"  
+            v-model="chemObj" v-model:vueSelection="selection"
             @selection-change="composerSelectionChange">
   </composer>
+  <label>{{ (selection || []).length }} object(s) selected</label>
 </template>
 <script>
 import { Composer } from './kekule-composer.js';
@@ -49,6 +57,13 @@ export default {
     composerSelectionChange(e)
     {
       console.log('Composer selection change', e.name, e.vueComponent, e.widget);
+    }
+  },
+  data()
+  {
+    return {
+      chemObj: undefined,
+      selection: undefined
     }
   },
 
@@ -63,14 +78,15 @@ export default {
 ```
 
 Some common-used Kekule widgets has already been wrapped with default options 
-(```{exposeWidgetEvents: true, exposeWidgetPropertiesToVueComputes: true, 'exposeWidgetPropertiesToVueProps': true}```),
+(```{exposeWidgetEvents: true, exposeWidgetPropertiesToVueComputes: true, 'exposeWidgetPropertiesToVueProps': true, 'enableVModel': true, 'enableVModelOnAllProperties': true}```),
 you can use them directly:
 
 ```vue
 <!-- App.vue -->
 <script>
-import { Components } from 'kekule-vue';
+import 'kekule';   // yes, you should import kekule package too.
 import 'kekule/theme';
+import { Components } from 'kekule-vue';
 export default {
   name: "App.vue",
   components: {
@@ -84,3 +100,5 @@ export default {
 }
 </script>
 ```
+
+You may also check the simple demo at the ``/demo``  directory of this repository to learn more.
