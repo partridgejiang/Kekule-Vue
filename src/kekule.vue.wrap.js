@@ -3,7 +3,7 @@ import { ClassEx, Kekule, KekuleVue } from './kekule.vue.base.js';
 import './kekule.vue.css';
 
 Kekule.globalOptions.add('Vue.widgetWrapper', {
-	exposeWidgetPropertiesToVueComputes: true,
+	// exposeWidgetPropertiesToVueComputes: true, // there are problems to expose widget property to vue component currently, may be fixed in the future
 	exposeWidgetPropertiesToVueProps: true,
 	exposeWidgetEvents: true,
 	enableVModel: true,
@@ -27,7 +27,7 @@ ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'dispatchEvent', function($origin
 			vueComp.$emit(eventName, event);
 		}
 		let vueModelInfo = this.__vueModelInfo__;
-		if (vueModelInfo && vueModelInfo.eventMap && !vueComp.__setComputePropValue__)
+		if (vueModelInfo && vueModelInfo.eventMap && !vueComp.__propModifiedByVueComponent__)
 		{
 			let affectedProps = vueModelInfo.eventMap[eventName] || [];
 			// if (affectedProps.length)
@@ -54,19 +54,6 @@ ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'dispatchEvent', function($origin
 				*/
 				vueComp._notifyModelValueChange(propName);
 			});
-
-			/*
-			if (this.__vueModelInfo__.methodName || this.__vueModelInfo__.propName)  // default model
-			{
-				if (this.__vueModelInfo__.events && this.__vueModelInfo__.events.indexOf(eventName) >= 0)
-				{
-					let modalValue = (this.__vueModelInfo__.methodName) ? this[this.__vueModelInfo__.methodName].bind(this)() :
-						(this.__vueModelInfo__.propName) ? this.getPropValue(this.__vueModelInfo__.propName) :
-							undefined;
-					vueComp.$emit('update:modelValue', modalValue);
-				}
-			}
-			*/
 		}
 	}
 	return result;
@@ -113,7 +100,7 @@ KekuleVue.Utils = {
 	{
 		let globalOptions = Kekule.globalOptions.Vue.widgetWrapper;
 		let ops = Object.extend({
-			exposeWidgetPropertiesToVueComputes: globalOptions.exposeWidgetPropertiesToVueComputes,
+			//exposeWidgetPropertiesToVueComputes: globalOptions.exposeWidgetPropertiesToVueComputes,
 			exposeWidgetPropertiesToVueProps: globalOptions.exposeWidgetPropertiesToVueProps,
 			exposeWidgetEvents: globalOptions.exposeWidgetEvents,
 			ignoredProperties: globalOptions.ignoredProperties,
@@ -143,7 +130,7 @@ KekuleVue.Utils = {
 				continue;
 
 			let propName = propInfo.name;
-			if (ops.exposeWidgetPropertiesToVueComputes)
+			if (false && ops.exposeWidgetPropertiesToVueComputes)  // there are problems to expose widget property to vue component currently, may be fixed in the future
 			{
 				if (propInfo.getter)  // do not expose write only prop to vue compute
 				{
@@ -162,7 +149,7 @@ KekuleVue.Utils = {
 							{
 								if (!this.widgetRef)
 									return;
-								this.__setComputePropValue__ = true;   // special flag, means the kekule property is changed by vue component
+								this.__propModifiedByVueComponent__ = true;   // special flag, means the kekule property is changed by vue component
 								try
 								{
 									//this.widgetRef.value.setPropValue(propName, value);
@@ -170,7 +157,7 @@ KekuleVue.Utils = {
 								}
 								finally
 								{
-									this.__setComputePropValue__ = false;
+									this.__propModifiedByVueComponent__ = false;
 								}
 							}
 						}
@@ -204,7 +191,7 @@ KekuleVue.Utils = {
 		}
 
 		let vueComponent = {
-			computed: vueComputes,
+			//computed: vueComputes,
 			props: vueProps,
 			watch: vueWatches,
 			methods: {
@@ -214,11 +201,11 @@ KekuleVue.Utils = {
 					let widget = this.getWidget();
 					// update vue compute props when the kekule property is changed
 					widget.addEventListener('change', e => {
-						if (this.__setComputePropValue__)   // the change is caused by set vue compute prop, nothing to do
+						if (this.__propModifiedByVueComponent__)   // the change is caused by set vue compute prop, nothing to do
 							return;
 						else   // change by internal widget itself, need to update the vue compute prop cache
 						{
-							this.__updateComputePropValueCache__ = true;
+							//this.__updateComputePropValueCache__ = true;
 							try
 							{
 								//let widget = this.getWidget();
@@ -251,23 +238,15 @@ KekuleVue.Utils = {
 							}
 							finally
 							{
-								this.__updateComputePropValueCache__ = false;
+								//this.__updateComputePropValueCache__ = false;
 							}
 						}
 					});
 					// setup by vue props values
 					vueProps.forEach(vuePropName => {
 						let value = this[vuePropName];
-						if (vuePropName === 'modelValue')  // default model value, transfer to suitable property name
-						{
-							let widget = this.getWidget();
-							let vueModelInfo = widget.__vueModelInfo__;
-							if (vueModelInfo && vueModelInfo.propName)
-							{
-								this[vueModelInfo.propName] = value;
-							}
-						}
-						this._setKekulePropValueByVueProp(vuePropName, value, true);  // only concern about real set prop values
+						//this._setKekulePropValueByVueProp(vuePropName, value, true);  // only concern about real set prop values
+						this._updateWidgetByVuePropValue(vuePropName, value, undefined, true);
 					});
 				},
 				_finalizeWidget()
@@ -279,21 +258,46 @@ KekuleVue.Utils = {
 				{
 					if (ignoreUndefinedVuePropValue && typeof(value) === 'undefined')
 						return;
-					let kPropName = KekuleVue.Utils._vuePropNameToKekule(vuePropName, vuePropNamePrefix);
+					let kPropName;
+					if (vuePropName === 'modelValue')  // default model value, transfer to suitable property name
+					{
+						let widget = this.getWidget();
+						let vueModelInfo = widget.__vueModelInfo__;
+						if (vueModelInfo && vueModelInfo.propName)
+						{
+							kPropName = vueModelInfo.propName;
+						}
+					}
+					else
+						kPropName = KekuleVue.Utils._vuePropNameToKekule(vuePropName, vuePropNamePrefix);
 					//console.log('set vue prop', this.widget.getClassName(), kPropName, value);
 					//if (this[kPropName] !== value)
+					if (kPropName)
 					{
-						this[kPropName] = value;
+						//this[kPropName] = value;
+						this.__propModifiedByVueComponent__ = true;
+						try
+						{
+							this.getWidget().setPropValue(kPropName, value);
+						}
+						finally
+						{
+							this.__propModifiedByVueComponent__ = false;
+						}
 					}
 				},
 
-				_updateWidgetByVuePropValue(vuePropName, newVal, oldVal)
+				_updateWidgetByVuePropValue(vuePropName, newVal, oldVal, ignoreUndefinedVuePropValue)
 				{
-					//console.log('_updateWidgetByVuePropValue', vuePropName, newVal, (newVal && newVal.__$vueModelValueUpdateInvoker$__ == this));
+					/*
+					if (newVal && newVal.__$vueModelValueUpdateInvoker$__ === this)
+						console.log('prop value returns ', vuePropName, this.widget.getClassName());
+					else if (newVal)
+						console.log('prop value to right place ', vuePropName, this.widget.getClassName());
+					*/
 					if (!newVal || newVal.__$vueModelValueUpdateInvoker$__ !== this)
 					{
-						let kPropName = KekuleVue.Utils._vuePropNameToKekule(vuePropName, vuePropNamePrefix);
-						this._setKekulePropValueByVueProp(vuePropName, newVal);
+						this._setKekulePropValueByVueProp(vuePropName, newVal, ignoreUndefinedVuePropValue);
 					}
 				},
 				_doNotifyModelValueChange(propName, propValue, isDefault)
