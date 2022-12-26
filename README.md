@@ -13,9 +13,7 @@ import { KekuleVue } from 'kekule-vue';
 let Composer = KekuleVue.Utils.wrapWidget(Kekule.Editor.Composer, 
     {
       // Vue events will be emitted when Kekule events being invoked in widget 	
-      exposeWidgetEvents: true,	
-      // each of widget's property will map to the wrapped Vue component's computed property	
-      exposeWidgetPropertiesToVueComputes: true,  
+      exposeWidgetEvents: true,	       
       // each of widget's property will map to the wrapped Vue component's property naming with 'vue' prefix, e.g. 'enableOperHistory' to 'vueEnableOperHistory'
       exposeWidgetPropertiesToVueProps: true,
       // explicitly set property names exposed to Vue
@@ -78,7 +76,7 @@ export default {
 ```
 
 Some common-used Kekule widgets has already been wrapped with default options 
-(```{exposeWidgetEvents: true, exposeWidgetPropertiesToVueComputes: true, 'exposeWidgetPropertiesToVueProps': true, 'enableVModel': true, 'enableVModelOnAllProperties': true}```),
+(```{exposeWidgetEvents: true, 'exposeWidgetPropertiesToVueProps': true, 'enableVModel': true, 'enableVModelOnAllProperties': true}```),
 you can use them directly:
 
 ```vue
