@@ -1,6 +1,6 @@
 <template>
   <section class="stage">
-    <composer id="composer" ref="composer" vue-predefined-setting="fullFunc" v-model="chemObj" @endManipulateObject="onComposerEndManipulateObject"></composer>
+    <composer id="composer" ref="composer" vue-predefined-setting="fullFunc" v-model="chemObj" @userModificationDone="onComposerUserModificationDone"></composer>
     <viewer id="viewer" ref="viewer" vue-predefined-setting="basic" :vue-chem-obj="chemObj"></viewer>
   </section>
 </template>
@@ -28,7 +28,7 @@ export default {
     //this.$refs.composer.getWidget().newDoc();
   },
   methods: {
-    onComposerEndManipulateObject()
+    onComposerUserModificationDone()
     {
       this.$refs.viewer.getWidget().requestRepaint();
     }
