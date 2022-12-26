@@ -99,4 +99,18 @@ export default {
 </script>
 ```
 
+Several util methods are also wrapped in the Vue component to access the widget:
+                                                                      
+* ``vueComponent.getWidgetPropValue(kekulePropName)``: returns the property value of the wrapped Kekule widget;
+* ``vueComponent.setWidgetPropValue(kekulePropName, value)``: sets the property value of the wrapped Kekule widget;
+* ``vueComponent.getWidget()``: returns the wrapped Kekule widget instance itself.
+
+Inside the wrapped Kekule widget, method ``kekuleWidget.getVueComponent()`` can be used to retrieve the wrapper Vue component.
+E.g.:
+
+```javascript
+console.log(vueComponent.getWidget().getVueComponent() === vueComponent);  // true
+console.log(vueComponent.getWidgetPropValue('enabled') === vueComponent.getWidget().enabled);  // true
+```
+
 You may also check the simple demo at the ``/demo``  directory of this repository to learn more.
