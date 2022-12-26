@@ -45,7 +45,7 @@ let wrapWidgetConfigs = [
 			'defaultModelValuePropName': 'chemObj',
 			//'defaultModelValueGetterMethod': 'getSavingTargetObj',  // cause problem in v-model
 			'modelUpdateEventMap': {
-				//'editObjsUpdated': ['chemObj'],
+				'editObjsUpdated': ['chemObj'],
 				//'hoverOnObjs': ['hotTrackedObjs'],
 				//'selectionChange': ['selection'],
 				'repaint': ['drawOptions']

@@ -196,6 +196,8 @@ KekuleVue.Utils = {
 			watch: vueWatches,
 			methods: {
 				getWidget() { return this.widget; },
+				getWidgetPropValue(propName) { return this.widget.getPropValue(); },
+				setWidgetPropValue(propName, value) { this.widget.setPropValue(propName, value); return this; },
 				_initWidget()
 				{
 					let widget = this.getWidget();
