@@ -17,6 +17,6 @@ Kekule.Vue = {};
 
 let KekuleVue = Kekule.Vue;
 
-KekuleVue.VERSION = '0.1.0';
+KekuleVue.VERSION = '0.2.0';
 
 export { ClassEx, Kekule, KekuleVue };
