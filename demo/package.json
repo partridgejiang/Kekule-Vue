@@ -8,7 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "kekule": "^0.9.9",
+    "kekule": "^0.9.10",
     "vue": "^3.2.45"
   },
   "devDependencies": {
