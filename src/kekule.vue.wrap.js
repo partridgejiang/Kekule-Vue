@@ -33,6 +33,7 @@ ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'dispatchEvent', function($origin
 			// if (affectedProps.length)
 			// 	console.log(vueModelInfo, affectedProps);
 			affectedProps.forEach(propName => {
+				/*
 				let modelValue;
 				if (propName === vueModelInfo.propName)  // default model property
 				{
@@ -50,6 +51,8 @@ ClassEx.extendMethod(Kekule.Widget.BaseWidget, 'dispatchEvent', function($origin
 					vueComp._notifyModelValueChange(propName, modelValue, false);
 					//console.log('update custom', eventName, vuePropName, modelValue);
 				}
+				*/
+				vueComp._notifyModelValueChange(propName);
 			});
 
 			/*
@@ -147,7 +150,8 @@ KekuleVue.Utils = {
 					vueComputes[propName] = {};
 					vueComputes[propName].get = function ()
 					{
-						return this.widgetRef && this.widgetRef.value.getPropValue(propName);
+						//return this.widgetRef && this.widgetRef.value.getPropValue(propName);
+						return this.widgetRef && this.widgetRef.value[propName];
 						//return this.widgetRef && this.widgetRef.getPropValue(propName);
 					}
 					if (propInfo.setter)
@@ -161,7 +165,8 @@ KekuleVue.Utils = {
 								this.__setComputePropValue__ = true;   // special flag, means the kekule property is changed by vue component
 								try
 								{
-									this.widgetRef.value.setPropValue(propName, value);
+									//this.widgetRef.value.setPropValue(propName, value);
+									this.widgetRef.value[propName] = value;
 								}
 								finally
 								{
@@ -216,11 +221,14 @@ KekuleVue.Utils = {
 							this.__updateComputePropValueCache__ = true;
 							try
 							{
-								let widget = this.getWidget();
+								//let widget = this.getWidget();
 								e.changedPropNames.forEach(propName => {
+									/*
 									let value = this.getWidget().getPropValue(propName);
 									this[propName] = value;
+									*/
 									//console.log('prop change', propName, value, widget.__vueModelInfo__);
+									/*
 									if (widget.__vueModelInfo__) // update vmodel value
 									{
 										// console.log('update' + KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix), value);
@@ -237,6 +245,8 @@ KekuleVue.Utils = {
 											this._notifyModelValueChange(propName, value, true);
 										}
 									}
+									*/
+									this._notifyModelValueChange(propName);
 								});
 							}
 							finally
@@ -286,7 +296,7 @@ KekuleVue.Utils = {
 						this._setKekulePropValueByVueProp(vuePropName, newVal);
 					}
 				},
-				_notifyModelValueChange(propName, propValue, isDefault)
+				_doNotifyModelValueChange(propName, propValue, isDefault)
 				{
 					let vuePropName = isDefault ? 'modelValue' : KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix);
 					let propValueType = typeof(propValue);
@@ -294,6 +304,30 @@ KekuleVue.Utils = {
 					if (propValue && (propValueType === 'object' || propValueType === 'function'))     // complex value, we will attach a special flag here, avoid _updateWidgetByVuePropValue be called on this invoker
 						propValue.__$vueModelValueUpdateInvoker$__ = this;
 					this.$emit('update:' + vuePropName, propValue);
+				},
+				_notifyModelValueChange(propName)
+				{
+					let widget = this.getWidget();
+					let propValue = widget.getPropValue(propName);
+					if (widget.__vueModelInfo__) // can update vmodel value
+					{
+						// console.log('update' + KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix), value);
+						if (widget.__vueModelInfo__.enableOnAllProperties)
+						{
+							//this.$emit('update:' + KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix), value);
+							this._doNotifyModelValueChange(propName, propValue);
+						}
+						if (propName === widget.__vueModelInfo__.propName)  // default model value
+						{
+							let defaultValue;
+							if (widget.__vueModelInfo__.methodName)
+								defaultValue = widget[widget.__vueModelInfo__.methodName].bind(widget)();
+							else
+								defaultValue = propValue;
+							//this.$emit('update:modelValue', value);
+							this._doNotifyModelValueChange(propName, defaultValue, true);
+						}
+					}
 				}
 			},
 			created()
