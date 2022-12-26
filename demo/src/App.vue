@@ -1,6 +1,4 @@
 <script setup>
-// import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
 import ComposerAndViewer from './components/composerAndViewer.vue';
 import SynPeriodicTables from "./components/synPeriodicTables.vue";
 
@@ -25,6 +23,7 @@ import SynPeriodicTables from "./components/synPeriodicTables.vue";
 
     <composer-and-viewer></composer-and-viewer>
   </section>
+
   <section>
     <h2>Sync Periodic Table Demo</h2>
     <p>
@@ -38,13 +37,8 @@ import SynPeriodicTables from "./components/synPeriodicTables.vue";
       &lt;periodic-table v-model:vueSelectedSymbols="selectedSymbols" :vue-use-mini-mode="useMiniMode"r&gt;&lt;/periodic-tabler&gt;</pre>
     <syn-periodic-tables></syn-periodic-tables>
   </section>
-  </main>
 
-  <!--
-  <main>
-    <TheWelcome />
   </main>
-  -->
 
 </template>
 

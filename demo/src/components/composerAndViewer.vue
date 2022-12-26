@@ -1,7 +1,7 @@
 <template>
   <section class="stage">
-    <composer id="composer" ref="composer" vue-predefined-setting="fullFunc" v-model="chemObj" @editObjsUpdated="onComposerEditObjsUpdated"></composer>
-    <viewer id="viewer" ref="viewer" vue-predefined-setting="basic" :vue-render-type="2" :vue-chem-obj="chemObj"></viewer>
+    <composer id="composer" ref="composer" vue-predefined-setting="fullFunc" v-model="chemObj" @endManipulateObject="onComposerEndManipulateObject"></composer>
+    <viewer id="viewer" ref="viewer" vue-predefined-setting="basic" :vue-chem-obj="chemObj"></viewer>
   </section>
 </template>
 
@@ -25,12 +25,12 @@ export default {
   },
   mounted()
   {
-    this.$refs.composer.getWidget().newDoc();
+    //this.$refs.composer.getWidget().newDoc();
   },
   methods: {
-    onComposerEditObjsUpdated()
+    onComposerEndManipulateObject()
     {
-      this.$refs.viewer.getWidget().repaint();
+      this.$refs.viewer.getWidget().requestRepaint();
     }
   }
 }
