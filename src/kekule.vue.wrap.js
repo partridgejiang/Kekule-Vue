@@ -173,7 +173,6 @@ KekuleVue.Utils = {
 					let vuePropName = KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix);
 					vueProps.push(vuePropName);
 					vueWatches[vuePropName] = function(newVal, oldVal) {
-						// console.log('vueprop changed', vuePropName, newVal, oldVal);
 						//this._setKekulePropValueByVueProp(vuePropName, newVal);
 						this._updateWidgetByVuePropValue(vuePropName, newVal, oldVal);
 					};
@@ -248,8 +247,9 @@ KekuleVue.Utils = {
 					vueProps.forEach(vuePropName => {
 						let value = this[vuePropName];
 						//this._setKekulePropValueByVueProp(vuePropName, value, true);  // only concern about real set prop values
-						this._updateWidgetByVuePropValue(vuePropName, value, undefined, true);
+						this._initWidgetWithVuePropValue(vuePropName, value, undefined, true);
 					});
+
 				},
 				_finalizeWidget()
 				{
@@ -302,6 +302,21 @@ KekuleVue.Utils = {
 						this._setKekulePropValueByVueProp(vuePropName, newVal, ignoreUndefinedVuePropValue);
 					}
 				},
+				_initWidgetWithVuePropValue(vuePropName, vuePropInitValue)
+				{
+					this._updateWidgetByVuePropValue(vuePropName, vuePropInitValue, undefined, true);
+					let widget = this.getWidget();
+					if (vuePropInitValue === undefined && widget.__vueModelInfo__)  // vueProp value is not set, check if Kekule property value is not emoty, if so , a model update event may need to be emitted
+					{
+						let kPropName = KekuleVue.Utils._vuePropNameToKekule(vuePropName, vuePropNamePrefix);
+						let kValue = widget.getPropValue(kPropName);
+						if (kValue !== undefined)
+						{
+							this._notifyModelValueChange(kPropName, kValue);
+						}
+					}
+				},
+
 				_doNotifyModelValueChange(propName, propValue, isDefault)
 				{
 					let vuePropName = isDefault ? 'modelValue' : KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix);
@@ -311,10 +326,11 @@ KekuleVue.Utils = {
 						propValue.__$vueModelValueUpdateInvoker$__ = this;
 					this.$emit('update:' + vuePropName, propValue);
 				},
-				_notifyModelValueChange(propName)
+				_notifyModelValueChange(propName, propValue)
 				{
 					let widget = this.getWidget();
-					let propValue = widget.getPropValue(propName);
+					if (propValue === undefined)
+						propValue = widget.getPropValue(propName);
 					if (widget.__vueModelInfo__) // can update vmodel value
 					{
 						// console.log('update' + KekuleVue.Utils._kekulePropNameToVue(propName, vuePropNamePrefix), value);
