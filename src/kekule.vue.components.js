@@ -1,4 +1,5 @@
 import { Kekule, KekuleVue } from './kekule.vue.base.js';
+import './kekule.vue.wrap.js';
 
 let wrapWidgetConfigs = [
 	{
@@ -15,7 +16,6 @@ let wrapWidgetConfigs = [
 		'widgetClassName': 'Kekule.ChemWidget.Viewer',
 		options: {
 			'defaultModelValuePropName': 'chemObj',
-			//'defaultModelValueGetterMethod': 'getSavingTargetObj',
 			'modelUpdateEventMap': {
 				'repaint': ['drawOptions', 'moleculeDisplayType', 'zoom', 'padding', 'autofit', 'autoShrink', 'hideHydrogens', 'allowCoordBorrow', 'autoSize', 'baseCoordOffset']
 			}
@@ -43,9 +43,9 @@ let wrapWidgetConfigs = [
 		'widgetClassName': 'Kekule.Editor.Composer',
 		options: {
 			'defaultModelValuePropName': 'chemObj',
-			//'defaultModelValueGetterMethod': 'getSavingTargetObj',  // cause problem in v-model
+			'defaultModelValueGetterMethod': 'getSavingTargetObj',
 			'modelUpdateEventMap': {
-				'editObjsUpdated': ['chemObj'],
+				//'editObjsUpdated': ['chemObj'],
 				//'hoverOnObjs': ['hotTrackedObjs'],
 				//'selectionChange': ['selection'],
 				'repaint': ['drawOptions']

@@ -358,7 +358,7 @@ KekuleVue.Utils = {
 			},
 			mounted()
 			{
-				let elem = this.$refs.widgetElem;
+				let elem = this.$refs.componentElem;
 				this.widget = new widgetClass(elem.ownerDocument);
 				this.widgetRef = ref(this.widget);
 				//console.log('create widget', this.widget.getClassName());
@@ -387,7 +387,7 @@ KekuleVue.Utils = {
 				this._finalizeWidget();
 			},
 			render(){
-				return h('div', {'ref': 'widgetElem', 'class': 'Kekule-Vue-Component-Wrapper'});
+				return h('div', {'ref': 'componentElem', 'class': 'Kekule-Vue-Component-Wrapper'});
 			}
 		}
 
