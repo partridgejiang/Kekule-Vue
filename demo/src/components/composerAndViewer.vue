@@ -43,6 +43,7 @@ export default {
     flex-direction: column;
     min-height: 400px;
     min-width: 400px;
+    height: 600px;
   }
   #composer, #viewer
   {
@@ -64,6 +65,7 @@ export default {
     .stage
     {
       flex-direction: row;
+      height: auto;
     }
   }
 
