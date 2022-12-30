@@ -9,6 +9,7 @@ Use the following codes to wrap a Kekule.js widget class to Vue component:
 // kekulevue-composer.js
 import { Kekule } from 'kekule';
 import { KekuleVue } from 'kekule-vue';
+import 'kekule/theme';
 
 let Composer = KekuleVue.Utils.wrapWidget(Kekule.Editor.Composer, 
     {
