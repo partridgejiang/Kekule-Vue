@@ -1,6 +1,6 @@
 {
   "name": "kekule-vue",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Vue component wrapper for Kekule.js widgets",
   "main": "src/kekule.vue.js",
   "author": {
@@ -31,7 +31,7 @@
   ],
 
   "dependencies": {
-    "kekule": "^0.9.10",
+    "kekule": "^1.0.0",
     "vue": "^3.2.45"
   }
 }
